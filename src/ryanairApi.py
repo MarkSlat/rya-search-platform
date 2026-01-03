@@ -9,6 +9,7 @@ from src.models.flysTo import FlysTo
 GET_ALL_ACTIVE_AIRPORTS_URL = "https://www.ryanair.com/api/views/locate/5/airports/en/active"
 GET_ALL_ROUTES_FOR_AIRPORT_URL = "https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/{airportCode}"
 GET_DATES_FOR_FLIGHT_URL = "https://www.ryanair.com/api/farfnd/v4/oneWayFares/{origin}/{destination}/availabilities"
+GET_FARE_FOR_NO_ADULTS_URL ="https://www.ryanair.com/api/booking/v4/en-gb/availability?ADT={adult}&DateOut={departDate}&Destination={destination}&Origin={origin}&IncludeConnectingFlights=false&RoundTrip=false&ToUs=AGREED"
 
 
 def getActiveAirports() -> List[Airport]:
@@ -32,7 +33,10 @@ def getActiveAirports() -> List[Airport]:
     
     return airports
 
-def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> List[FlysTo]:
+def getFareForTrip(adult: int, departDate: str, origin: str, destination: str) -> List[FlysTo]:
+    print()
+
+def getDestinationsForAirport(airportCode: str, airportList: List[Airport], getFare: bool) -> List[FlysTo]:
     # Build internal lookup by code
     airports = {airport.code: airport for airport in airportList}
 
@@ -90,12 +94,12 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
         data = response.json()
         
         for item in data:
-            # Create FlysTo object
+            # Create FlysTo object            
             flys_to = FlysTo(
             origin=temp_orgin,
             destination=temp_destination,
             date=datetime.strptime(item, "%Y-%m-%d").date(),
-            depatureTime=None,
+            departureTime=None,
             arrivalTime=None,
             fare=None
         )

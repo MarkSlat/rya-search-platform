@@ -9,7 +9,7 @@ class FlysTo:
     origin: Airport
     destination: Airport
     date: datetime.date
-    depatureTime: Optional[str] = None
+    departureTime: Optional[str] = None
     arrivalTime: Optional[str] = None
     fare: Optional[float] = None
     

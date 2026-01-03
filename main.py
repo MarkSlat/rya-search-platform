@@ -2,6 +2,7 @@ import time
 from typing import List
 from neo4j import GraphDatabase
 
+from src.models.graphRepository import GraphRepository
 from src.models.flysTo import FlysTo
 from src.models.airport import Airport
 from src.ryanairApi import getActiveAirports, getDestinationsForAirport
@@ -11,52 +12,9 @@ def get_neo4j_driver(uri="bolt://localhost:7687", user="neo4j", password="test12
     return GraphDatabase.driver(uri, auth=(user, password))
 
 
-def clearGraph(driver):
-    with driver.session() as session:
-        session.run("MATCH (n) DETACH DELETE n")
-    print("Graph cleared!")
-
-
-def populateAirportsAndFlights(driver, airports: List[Airport], flights: List[FlysTo]):
-    with driver.session() as session:
-        # Create airport nodes
-        for airport in airports:
-            session.run(
-                """
-                MERGE (a:Airport {code: $code})
-                SET a.name = $name,
-                    a.cityName = $cityName,
-                    a.countryName = $countryName,
-                    a.latitude = $latitude,
-                    a.longitude = $longitude
-                """,
-                code=airport.code,
-                name=airport.name,
-                cityName=airport.cityName,
-                countryName=airport.countryName,
-                latitude=airport.latitude,
-                longitude=airport.longitude
-            )
-
-        # Create flight relationships
-        for flight in flights:
-            session.run(
-                """
-                MATCH (origin:Airport {code: $originCode})
-                MATCH (dest:Airport {code: $destCode})
-                MERGE (origin)-[r:FLYS_TO]->(dest)
-                SET r.date = $date,
-                    r.departureTime = $depTime,
-                    r.arrivalTime = $arrTime,
-                    r.fare = $fare
-                """,
-                originCode=flight.origin.code,
-                destCode=flight.destination.code,
-                date=flight.date.isoformat(),
-                depTime=flight.depatureTime,
-                arrTime=flight.arrivalTime,
-                fare=flight.fare
-            )
+def populateAirportsAndFlights(driver, airports, flights):
+    GraphRepository(driver).save_airports(airports)
+    GraphRepository(driver).save_flights(flights)
     print("Airports and flights populated!")
 
 
@@ -64,12 +22,14 @@ driver = get_neo4j_driver()
 
 # clearGraph(driver)
 
-
+# GraphRepository(driver).clearGraph()
 
 airports = getActiveAirports()
 flights = getDestinationsForAirport("SNN", airports)
 populateAirportsAndFlights(driver, airports, flights)
+flights = getDestinationsForAirport("NOC", airports)
 
+GraphRepository(driver).save_flights(flights)
 # start = time.time()
 
 # end = time.time()
