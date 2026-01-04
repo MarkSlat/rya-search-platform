@@ -34,12 +34,12 @@ def getActiveAirports() -> List[Airport]:
     
     return airports
 
-def getFareForTrip(adult: int, departDate: str, origin_airport: Airport, destination_airport: Airport) -> List[AdvFlysTo]:
+def getFareForTrip(adult: int, departDate: str, origin_airport: str, destination_airport: str) -> List[AdvFlysTo]:
     url = GET_FARE_FOR_NO_ADULTS_URL.format(
         adult=adult,
         departDate=departDate,
-        origin=origin_airport.code,
-        destination=destination_airport.code
+        origin=origin_airport,
+        destination=destination_airport
     )
     
     response = requests.get(url)
@@ -69,15 +69,16 @@ def getFareForTrip(adult: int, departDate: str, origin_airport: Airport, destina
                 departure_dt = datetime.fromisoformat(segment["time"][0]) if segment.get("time") else None
                 arrival_dt = datetime.fromisoformat(segment["time"][1]) if segment.get("time") else None
                 
-                bscFlysTo = BscFlysTo(
-                            origin=origin_airport,
-                            destination=destination_airport,
-                            date=date_obj,
-                            )
+                # bscFlysTo = BscFlysTo(
+                #             origin=origin_airport,
+                #             destination=destination_airport,
+                #             date=date_obj,
+                #             )
 
                 flights_list.append(
                     AdvFlysTo(
-                        bscFlysTo=bscFlysTo,
+                        origin=origin_airport,
+                        destination=destination_airport,
                         departureTime=departure_dt,
                         arrivalTime=arrival_dt,
                         fare=fare_amount,

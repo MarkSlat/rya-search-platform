@@ -88,7 +88,7 @@ class GraphRepository:
             d.code  AS destination,
             r2.date AS returnDate,
             o2.code AS returnOrigin,
-            null    AS landAirport,
+            null    AS transferAirport,
             null    AS landDistance
         """
 
@@ -111,7 +111,7 @@ class GraphRepository:
             d1.code AS destination,
             r2.date AS returnDate,
             o2.code AS returnOrigin,
-            d2.code AS landAirport,
+            d2.code AS transferAirport,
             t.distance AS landDistance
         """
 

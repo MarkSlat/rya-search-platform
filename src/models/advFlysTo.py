@@ -7,7 +7,8 @@ from src.models.bscFlysTo import BscFlysTo
 
 @dataclass
 class AdvFlysTo:
-    bscFlysTo: BscFlysTo
+    origin: str
+    destination: str
     departureTime: datetime = None
     arrivalTime: datetime = None
     fare: float = None

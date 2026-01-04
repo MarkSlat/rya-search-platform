@@ -48,7 +48,7 @@ driver = get_neo4j_driver()
 
 # GraphRepository(driver).save_distances(distances)
 
-origin_airports = ['SNN']
+origin_airports = ['DUB']
 
 # r1_dates = [
 #     date(2026, 2, 6),  # First Friday in February
