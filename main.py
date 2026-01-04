@@ -6,7 +6,7 @@ from neo4j import GraphDatabase
 from src.graphRepository import GraphRepository
 from src.models.airport import Airport
 from src.ryanairApi import getActiveAirports, getDestinationsForAirport
-from src.utils import distanceForEachAirport
+from src.utils import build_trips_from_neo4j_results, distanceForEachAirport
 
 
 def get_neo4j_driver(uri="bolt://localhost:7687", user="neo4j", password="test1234"):
@@ -48,7 +48,7 @@ driver = get_neo4j_driver()
 
 # GraphRepository(driver).save_distances(distances)
 
-origin_airports = ['DUB']
+origin_airports = ['SNN']
 
 # r1_dates = [
 #     date(2026, 2, 6),  # First Friday in February
@@ -79,6 +79,12 @@ result = GraphRepository(driver).query_flights(origin_airports, r1_dates, r2_dat
 
 print(len(result))
 
+trips = build_trips_from_neo4j_results(result, adults=1)
+
 # Print the result
 for row in result:
     print(row)
+    
+print("Trips built:", len(trips))
+for trip in trips:
+    print(trip)
