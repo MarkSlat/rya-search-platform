@@ -2,8 +2,9 @@ from datetime import datetime
 from typing import List
 import requests
 
+from src.models.advFlysTo import AdvFlysTo
 from src.models.airport import Airport
-from src.models.flysTo import FlysTo
+from src.models.bscFlysTo import BscFlysTo
 
 
 GET_ALL_ACTIVE_AIRPORTS_URL = "https://www.ryanair.com/api/views/locate/5/airports/en/active"
@@ -33,7 +34,7 @@ def getActiveAirports() -> List[Airport]:
     
     return airports
 
-def getFareForTrip(adult: int, departDate: str, origin_airport, destination_airport) -> List[FlysTo]:
+def getFareForTrip(adult: int, departDate: str, origin_airport: Airport, destination_airport: Airport) -> List[AdvFlysTo]:
     url = GET_FARE_FOR_NO_ADULTS_URL.format(
         adult=adult,
         departDate=departDate,
@@ -50,7 +51,7 @@ def getFareForTrip(adult: int, departDate: str, origin_airport, destination_airp
     if currency != "EUR":
         print(f"Warning: fare currency is {currency}, not EUR!")
 
-    flights_list: List[FlysTo] = []
+    flights_list: List[AdvFlysTo] = []
 
     trips = data.get("trips", [])
     for trip in trips:
@@ -67,12 +68,16 @@ def getFareForTrip(adult: int, departDate: str, origin_airport, destination_airp
                 # Parse departure and arrival datetime
                 departure_dt = datetime.fromisoformat(segment["time"][0]) if segment.get("time") else None
                 arrival_dt = datetime.fromisoformat(segment["time"][1]) if segment.get("time") else None
+                
+                bscFlysTo = BscFlysTo(
+                            origin=origin_airport,
+                            destination=destination_airport,
+                            date=date_obj,
+                            )
 
                 flights_list.append(
-                    FlysTo(
-                        origin=origin_airport,
-                        destination=destination_airport,
-                        date=date_obj,
+                    AdvFlysTo(
+                        bscFlysTo=bscFlysTo,
                         departureTime=departure_dt,
                         arrivalTime=arrival_dt,
                         fare=fare_amount,
@@ -83,7 +88,7 @@ def getFareForTrip(adult: int, departDate: str, origin_airport, destination_airp
 
     return flights_list
 
-def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> List[FlysTo]:
+def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> List[BscFlysTo]:
     # Build internal lookup by code
     airports = {airport.code: airport for airport in airportList}
 
@@ -92,7 +97,7 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
     response.raise_for_status()
     data = response.json()
 
-    flys_to_list: List[FlysTo] = []
+    flys_to_list: List[BscFlysTo] = []
 
     origin_airport = airports.get(airportCode)
     if not origin_airport:
@@ -112,7 +117,7 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
             #     countryName=dest_data["country"]["name"],
             #     latitude=dest_data["coordinates"]["latitude"],
             #     longitude=dest_data["coordinates"]["longitude"],
-            #     flysTo=[]
+            #     BscFlysTo=[]
             # )
             # airports[dest_code] = destination_airport
             # airportList.append(destination_airport)  # keep the list updated
@@ -124,8 +129,8 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
         data = response.json()
         
         for item in data:
-            # Create FlysTo object
-            flys_to = FlysTo(
+            # Create BscFlysTo object
+            flys_to = BscFlysTo(
             origin=origin_airport,
             destination=destination_airport,
             date=datetime.strptime(item, "%Y-%m-%d").date()
@@ -141,8 +146,8 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
         data = response.json()
         
         for item in data:
-            # Create FlysTo object            
-            flys_to = FlysTo(
+            # Create BscFlysTo object            
+            flys_to = BscFlysTo(
             origin=temp_orgin,
             destination=temp_destination,
             date=datetime.strptime(item, "%Y-%m-%d").date(),

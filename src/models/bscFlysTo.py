@@ -5,15 +5,15 @@ from datetime import datetime
 from src.models.airport import Airport
 
 @dataclass
-class FlysTo:
+class BscFlysTo:
     origin: Airport
     destination: Airport
     date: datetime.date
-    departureTime: Optional[datetime] = None
-    arrivalTime: Optional[datetime] = None
-    fare: Optional[float] = None
-    flightNumber: Optional[str] = None
-    duration: Optional[str] = None
+    # departureTime: Optional[datetime] = None
+    # arrivalTime: Optional[datetime] = None
+    # fare: Optional[float] = None
+    # flightNumber: Optional[str] = None
+    # duration: Optional[str] = None
     
     def to_dict(self) -> Dict:
         return {
