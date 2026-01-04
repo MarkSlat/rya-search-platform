@@ -36,10 +36,30 @@ class GraphRepository:
                     f"""
                     MATCH (o:Airport {{code: $originCode}})
                     MATCH (d:Airport {{code: $destCode}})
-                    MERGE (o)-[r:FLYS_TO]->(d)
+                    MERGE (o)-[r:FLYS_TO {{date: $date}}]->(d)
                     SET {set_clause}
                     """,
                     originCode=flight.origin.code,
                     destCode=flight.destination.code,
                     **props
                 )
+
+                
+    def save_distances(self, distances):
+        with self.driver.session() as session:
+            for distance in distances:
+                props = distance.to_dict()
+                set_clause = self.build_set_clause("r", props)
+
+                session.run(
+                    f"""
+                    MATCH (o:Airport {{code: $originCode}})
+                    MATCH (d:Airport {{code: $destCode}})
+                    MERGE (o)-[r:DISTANCE_TO]->(d)
+                    SET {set_clause}
+                    """,
+                    originCode=distance.origin.code,
+                    destCode=distance.destination.code,
+                    **props
+                )
+                

@@ -33,10 +33,57 @@ def getActiveAirports() -> List[Airport]:
     
     return airports
 
-def getFareForTrip(adult: int, departDate: str, origin: str, destination: str) -> List[FlysTo]:
-    print()
+def getFareForTrip(adult: int, departDate: str, origin_airport, destination_airport) -> List[FlysTo]:
+    url = GET_FARE_FOR_NO_ADULTS_URL.format(
+        adult=adult,
+        departDate=departDate,
+        origin=origin_airport.code,
+        destination=destination_airport.code
+    )
+    
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    
+    # Check currency
+    currency = data.get("currency", "EUR")
+    if currency != "EUR":
+        print(f"Warning: fare currency is {currency}, not EUR!")
 
-def getDestinationsForAirport(airportCode: str, airportList: List[Airport], getFare: bool) -> List[FlysTo]:
+    flights_list: List[FlysTo] = []
+
+    trips = data.get("trips", [])
+    for trip in trips:
+        for trip_date in trip.get("dates", []):
+            date_obj = datetime.fromisoformat(trip_date["dateOut"].split("T")[0]).date()
+            for flight in trip_date.get("flights", []):
+                segment = flight["segments"][0]  # first segment (direct flight)
+                
+                fare_amount = None
+                fares = flight.get("regularFare", {}).get("fares", [])
+                if fares:
+                    fare_amount = fares[0].get("amount")
+
+                # Parse departure and arrival datetime
+                departure_dt = datetime.fromisoformat(segment["time"][0]) if segment.get("time") else None
+                arrival_dt = datetime.fromisoformat(segment["time"][1]) if segment.get("time") else None
+
+                flights_list.append(
+                    FlysTo(
+                        origin=origin_airport,
+                        destination=destination_airport,
+                        date=date_obj,
+                        departureTime=departure_dt,
+                        arrivalTime=arrival_dt,
+                        fare=fare_amount,
+                        flightNumber=segment.get("flightNumber"),
+                        duration=segment.get("duration")
+                    )
+                )
+
+    return flights_list
+
+def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> List[FlysTo]:
     # Build internal lookup by code
     airports = {airport.code: airport for airport in airportList}
 
@@ -82,8 +129,8 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport], getF
             origin=origin_airport,
             destination=destination_airport,
             date=datetime.strptime(item, "%Y-%m-%d").date()
-        )
-        flys_to_list.append(flys_to)
+            )
+            flys_to_list.append(flys_to)
         
         temp_orgin = destination_airport # Reverse
         temp_destination = origin_airport # Reverse
@@ -102,10 +149,7 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport], getF
             departureTime=None,
             arrivalTime=None,
             fare=None
-        )
-        flys_to_list.append(flys_to)
+            )
+            flys_to_list.append(flys_to)
 
     return flys_to_list
-
-    
-    

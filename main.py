@@ -2,10 +2,11 @@ import time
 from typing import List
 from neo4j import GraphDatabase
 
-from src.models.graphRepository import GraphRepository
+from src.graphRepository import GraphRepository
 from src.models.flysTo import FlysTo
 from src.models.airport import Airport
 from src.ryanairApi import getActiveAirports, getDestinationsForAirport
+from src.utils import distanceForEachAirport
 
 
 def get_neo4j_driver(uri="bolt://localhost:7687", user="neo4j", password="test1234"):
@@ -22,14 +23,37 @@ driver = get_neo4j_driver()
 
 # clearGraph(driver)
 
-# GraphRepository(driver).clearGraph()
+GraphRepository(driver).clearGraph()
 
 airports = getActiveAirports()
-flights = getDestinationsForAirport("SNN", airports)
-populateAirportsAndFlights(driver, airports, flights)
-flights = getDestinationsForAirport("NOC", airports)
 
-GraphRepository(driver).save_flights(flights)
+# baseAirports = ["DUB", "SNN", "NOC"]
+baseAirports = ["SNN", "NOC"]
+
+desinations = set() 
+
+GraphRepository(driver).save_airports(airports)
+for aiport in baseAirports:
+    flights = getDestinationsForAirport(aiport, airports)
+    GraphRepository(driver).save_flights(flights)
+    for flight in flights:
+        desinations.add(flight.origin.code)
+
+# print(distanceForEachAirport(airports))
+
+# Step 2: Convert the set of codes into a list of Airport objects
+def get_airports_by_codes(airport_codes, airports):
+    return [airport for airport in airports if airport.code in airport_codes]
+
+# Assuming 'airports' is a list of Airport objects
+airport_objects = get_airports_by_codes(desinations, airports)
+
+distances = distanceForEachAirport(airport_objects)
+
+
+# # flights = getDestinationsForAirport("NOC", airports)
+
+GraphRepository(driver).save_distances(distances)
 # start = time.time()
 
 # end = time.time()
