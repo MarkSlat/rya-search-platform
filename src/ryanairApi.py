@@ -151,9 +151,6 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
             origin=temp_orgin,
             destination=temp_destination,
             date=datetime.strptime(item, "%Y-%m-%d").date(),
-            departureTime=None,
-            arrivalTime=None,
-            fare=None
             )
             flys_to_list.append(flys_to)
 

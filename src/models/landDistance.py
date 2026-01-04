@@ -5,12 +5,12 @@ from src.models.airport import Airport
 
 
 @dataclass
-class landDistiance:
+class landDistance:
     origin: Airport
     destination: Airport
-    distinace: float
+    distance: float
     
     def to_dict(self) -> Dict:
         return {
-            "distinace": self.distinace,
+            "distance": self.distance,
         }

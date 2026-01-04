@@ -1,7 +1,7 @@
 import math
 from typing import List
 
-from src.models.landDistiance import landDistiance
+from src.models.landDistance import landDistance
 from src.models.airport import Airport
 
 @staticmethod
@@ -29,8 +29,8 @@ def haversine(lat1, lon1, lat2, lon2) -> float:
     return distance
 
 @staticmethod
-def distanceForEachAirport(airports: List[Airport]) -> List[landDistiance]:
-    distances: List[landDistiance] = []
+def distanceForEachAirport(airports: List[Airport]) -> List[landDistance]:
+    distances: List[landDistance] = []
     
     for origin_airport in airports:
         
@@ -39,10 +39,10 @@ def distanceForEachAirport(airports: List[Airport]) -> List[landDistiance]:
                 continue
             
             distances.append(
-                        landDistiance(
+                        landDistance(
                             origin=origin_airport,
                             destination=destination_airport,
-                            distinace=haversine(origin_airport.latitude, origin_airport.longitude, destination_airport.latitude, destination_airport.longitude)
+                            distance=haversine(origin_airport.latitude, origin_airport.longitude, destination_airport.latitude, destination_airport.longitude)
                         )
                     )
         
