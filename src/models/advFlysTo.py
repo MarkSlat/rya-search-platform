@@ -9,6 +9,7 @@ from src.models.bscFlysTo import BscFlysTo
 class AdvFlysTo:
     origin: str
     destination: str
+    destinationName: str = None
     departureTime: datetime = None
     arrivalTime: datetime = None
     fare: float = None

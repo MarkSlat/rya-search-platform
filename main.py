@@ -6,7 +6,7 @@ from neo4j import GraphDatabase
 from src.graphRepository import GraphRepository
 from src.models.airport import Airport
 from src.ryanairApi import getActiveAirports, getDestinationsForAirport
-from src.utils import build_trips_from_neo4j_results, distanceForEachAirport
+from src.utils import build_trips_from_neo4j_results
 
 
 def get_neo4j_driver(uri="bolt://localhost:7687", user="neo4j", password="test1234"):
@@ -30,7 +30,7 @@ driver = get_neo4j_driver()
 # # baseAirports = ["SNN"]
 # baseAirports = ["DUB", "SNN"]
 
-# desinations = set() 
+# desinations = set()
 
 # GraphRepository(driver).save_airports(airports)
 # for aiport in baseAirports:
@@ -48,7 +48,7 @@ driver = get_neo4j_driver()
 
 # GraphRepository(driver).save_distances(distances)
 
-origin_airports = ['SNN']
+origin_airports = ["SNN"]
 
 # r1_dates = [
 #     date(2026, 2, 6),  # First Friday in February
@@ -62,29 +62,36 @@ origin_airports = ['SNN']
 #     date(2026, 2, 22), # Third Sunday in February
 #     date(2026, 3, 1)  # Fourth Sunday in February
 # ]\
-    
-r1_dates = [
-    date(2026, 3, 25)
-]
-r2_dates = [
-    date(2026, 3, 29)
-]    
-    
-    
+
+r1_dates = [date(2026, 3, 25)]
+r2_dates = [date(2026, 3, 29)]
+
 lengths_of_stay = [2, 3, 4, 5, 6]  # Length of stay in days (e.g., 3 days, 4 days)
-blacklist_countries = ['Ireland', 'Poland', 'United Kingdom']  # Exclude destinations in Ireland and Spain
+blacklist_countries = [
+    "Ireland",
+    "Poland",
+    # "United Kingdom",
+]  # Exclude destinations in Ireland and Spain
 
 # Run the query
-result = GraphRepository(driver).query_flights(origin_airports, r1_dates, r2_dates, lengths_of_stay, blacklist_countries, 100)
+result = GraphRepository(driver).query_flights(
+    origin_arrival_airports=origin_airports,
+    origin_departure_airports=origin_airports,
+    r1_dates=r1_dates,
+    r2_dates=r2_dates,
+    lengths_of_stay=lengths_of_stay,
+    blacklist_countries=blacklist_countries,
+    max_distance=100,
+)
 
-print(len(result))
+# print(result)
 
 trips = build_trips_from_neo4j_results(result, adults=1)
 
 # Print the result
-for row in result:
-    print(row)
-    
+# for row in result:
+#     print(row)
+
 print("Trips built:", len(trips))
 for trip in trips:
     print(trip)

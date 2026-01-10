@@ -2,10 +2,13 @@ from datetime import datetime
 import math
 from typing import Dict, List
 
+import requests
+
 from src.models.landDistance import landDistance
 from src.models.airport import Airport
+from src.models.neo4jResult import Neo4jResultFormatted
 from src.models.trip import Trip
-from src.ryanairApi import getFareForTrip
+from src.ryanairApi import getAdvFlights
 
 @staticmethod
 def haversine(lat1, lon1, lat2, lon2) -> float:
@@ -57,93 +60,65 @@ def neo4j_date_to_str(d) -> str:
 
 
 def build_trips_from_neo4j_results(
-    results: List[Dict],
+    results: List[Neo4jResultFormatted],
     adults: int = 1
 ) -> List[Trip]:
 
     trips: List[Trip] = []
 
-    for row in results:
-        origin = row["origin"]
-        destination = row["destination"]
-        outbound_date_str = f"{row['outboundDate'].year:04d}-{row['outboundDate'].month:02d}-{row['outboundDate'].day:02d}"
-        outbound_date = datetime.fromisoformat(outbound_date_str).date()
+    for result in results:
+        outboundflights = getAdvFlights(
+            adult=adults,
+            departDate=neo4j_date_to_str(result.origin_departure_date),
+            origin_airport=result.origin_departure_airport_code,
+            destination_airport=result.destination_arrival_airport_code,
+        )
+        
+        returnflights = getAdvFlights(
+            adult=adults,
+            departDate=neo4j_date_to_str(result.destination_departure),
+            origin_airport=result.destination_departure_airport_code,
+            destination_airport=result.origin_arrival_airport_code,
+        )
+        
+        for outbound in outboundflights:
+            for ret in returnflights:
+                fare = None
+                if outbound.fare is not None and ret.fare is not None:
+                    fare = outbound.fare + ret.fare
+                    
+                # if outbound.destinationName == destinationName
+                
+                
 
-        transfer_airport = row.get("transferAirport")
-        land_distance = row.get("landDistance")
-
-        # -------------------------
-        # DIRECT FLIGHTS
-        # -------------------------
-        if not transfer_airport:
-            flights = getFareForTrip(
-                adult=adults,
-                departDate=outbound_date_str,
-                origin_airport=origin,
-                destination_airport=destination
-            )
-
-            for f in flights:
-                if f.fare is None:
-                    continue
-
-                trips.append(
-                    Trip(
-                        origin=origin,
-                        destination=destination,
-                        date=outbound_date,
-                        originDepartureTime=f.departureTime,
-                        destinationArrivalTime=f.arrivalTime,
-                        fullFare=f.fare,
-                        transfer=False,
-                        distance=None
-                    )
+                trip = Trip(
+                    destination=outbound.destinationName,
+                    originDepartureAirportName=result.origin_departure_airport_code,
+                    destinationArrivalAirportName=result.destination_arrival_airport_code,
+                    destinationDepartureAirportName=result.destination_departure_airport_code,
+                    originArrivalAirportName=result.origin_arrival_airport_code,
+                    originDepartureTime=result.origin_departure_date,
+                    destinationDepartureTime=result.destination_departure,
+                    fullFare=fare,
+                    distance=result.travel_distance_km
                 )
 
-        # -------------------------
-        # NON-TEMPORAL "TRANSFER"
-        # -------------------------
-        else:
-            leg1_flights = getFareForTrip(
-                adult=adults,
-                departDate=outbound_date_str,
-                origin_airport=origin,
-                destination_airport=transfer_airport
-            )
+                trips.append(trip)
 
-            leg2_flights = getFareForTrip(
-                adult=adults,
-                departDate=outbound_date_str,
-                origin_airport=transfer_airport,
-                destination_airport=destination
-            )
+        # trip = Trip(
+        #     destination=result.destination_arrival_airport_code,
+        #     originDepartureAirportName=result.origin_departure_airport_code,
+        #     destinationArrivalAirportName=result.destination_arrival_airport_code,
+        #     destinationDepartureAirportName=result.destination_departure_airport_code,
+        #     originArrivalAirportName=result.origin_arrival_airport_code,
+        #     originDepartureTime=result.origin_departure_date,
+        #     destinationDepartureTime=result.destination_departure,
+        #     fullFare=fare,
+        #     distance=result.travel_distance_km
+        # )
 
-            for f1 in leg1_flights:
-                if f1.fare is None:
-                    continue
+        # trips.append(trip)
 
-                for f2 in leg2_flights:
-                    if f2.fare is None:
-                        continue
-
-                    trips.append(
-                        Trip(
-                            origin=origin,
-                            destination=destination,
-                            date=outbound_date,
-                            originDepartureTime=f1.departureTime,
-                            originArrivalTime=f1.arrivalTime,
-                            destinationDepartureTime=f2.departureTime,
-                            destinationArrivalTime=f2.arrivalTime,
-                            fullFare=f1.fare + f2.fare,
-                            transfer=True,
-                            distance=land_distance
-                        )
-                    )
-
-    # -------------------------
-    # SORT CHEAPEST FIRST
-    # -------------------------
-    trips.sort(key=lambda t: math.inf if t.fullFare is None else t.fullFare)
 
     return trips
+

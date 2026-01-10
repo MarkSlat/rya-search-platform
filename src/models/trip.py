@@ -6,9 +6,9 @@ from src.models.airport import Airport
 
 @dataclass
 class Trip:
-    origin: str
+    # origin: str
     destination: str
-    date: datetime.date
+    # date: datetime.date
     originDepartureAirportName: str = None
     destinationArrivalAirportName: str = None
     destinationDepartureAirportName: str = None
