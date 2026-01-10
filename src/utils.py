@@ -86,13 +86,14 @@ def build_trips_from_neo4j_results(
                 fare = None
                 if outbound.fare is not None and ret.fare is not None:
                     fare = outbound.fare + ret.fare
-                    
-                # if outbound.destinationName == destinationName
-                
-                
+
+                if outbound.destinationName == ret.originName:
+                    destination = outbound.destinationName
+                else:
+                    destination = f"{outbound.destinationName} / {ret.originName}"
 
                 trip = Trip(
-                    destination=outbound.destinationName,
+                    destination=destination,
                     originDepartureAirportName=result.origin_departure_airport_code,
                     destinationArrivalAirportName=result.destination_arrival_airport_code,
                     destinationDepartureAirportName=result.destination_departure_airport_code,

@@ -90,7 +90,12 @@ def getAdvFlights(
     flights_list: List[AdvFlysTo] = []
     trips = data.get("trips", [])
     
+    
+    originName = trips[0].get("originName", "")
     destinationName = trips[0].get("destinationName", "")
+    
+    originName = originName.strip()
+    destinationName = destinationName.strip()
     
     for trip in trips:
         for trip_date in trip.get("dates", []):
@@ -113,6 +118,7 @@ def getAdvFlights(
                     AdvFlysTo(
                         origin=origin_airport,
                         destination=destination_airport,
+                        originName=originName,
                         destinationName=destinationName,
                         departureTime=departure_dt,
                         arrivalTime=arrival_dt,
