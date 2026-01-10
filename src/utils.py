@@ -1,8 +1,6 @@
-from datetime import datetime
 import math
-from typing import Dict, List
+from typing import List
 
-import requests
 
 from src.models.landDistance import landDistance
 from src.models.airport import Airport

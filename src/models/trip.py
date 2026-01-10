@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Optional
 from datetime import datetime
 
-from src.models.airport import Airport
 
 @dataclass
 class Trip:

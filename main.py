@@ -1,11 +1,7 @@
 from datetime import date
-import time
-from typing import List
 from neo4j import GraphDatabase
 
 from src.graphRepository import GraphRepository
-from src.models.airport import Airport
-from src.ryanairApi import getActiveAirports, getDestinationsForAirport
 from src.utils import build_trips_from_neo4j_results
 
 

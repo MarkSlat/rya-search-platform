@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict
 from datetime import datetime
 
 from src.models.airport import Airport
