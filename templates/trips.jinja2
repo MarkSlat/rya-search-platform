@@ -34,6 +34,11 @@
             margin-bottom: 20px;
         }
 
+        .table-container {
+            max-height: 400px; /* adjust as needed */
+            overflow-y: auto;
+        }
+
         .table thead th {
             background: #343a40;
             color: #fff;
@@ -50,6 +55,7 @@
 
         .table-hover tbody tr:hover {
             background-color: #f1f5ff;
+            cursor: pointer;
         }
 
         .fare {
@@ -75,8 +81,8 @@
             <!-- MAP -->
             <div id="map"></div>
 
-            <!-- TABLE -->
-            <div class="table-responsive">
+            <!-- SCROLLABLE TABLE -->
+            <div class="table-container">
                 <table class="table table-striped table-hover table-sm">
                     <thead>
                         <tr>
@@ -140,18 +146,16 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const bounds = [];
-const drawnRoutes = new Map(); // Deduplicate routes
+const drawnRoutes = new Map();
+let selectedRow = null;
 
-// Helper: unique key for route (directional)
 function routeKey(a, b) {
     return `${a[0].toFixed(4)},${a[1].toFixed(4)}->${b[0].toFixed(4)},${b[1].toFixed(4)}`;
 }
 
-// Keep track of row → its lines for hover highlighting
 document.querySelectorAll("tbody tr").forEach(row => {
 
     const legs = [
-        // Outbound
         {
             from: [
                 parseFloat(row.dataset.originDepartureLat),
@@ -162,7 +166,6 @@ document.querySelectorAll("tbody tr").forEach(row => {
                 parseFloat(row.dataset.destinationArrivalLon)
             ]
         },
-        // Return
         {
             from: [
                 parseFloat(row.dataset.destinationDepartureLat),
@@ -175,7 +178,7 @@ document.querySelectorAll("tbody tr").forEach(row => {
         }
     ];
 
-    row._lines = []; // store lines for this row
+    row._lines = [];
 
     legs.forEach(leg => {
         if (leg.from.some(isNaN) || leg.to.some(isNaN)) return;
@@ -197,16 +200,46 @@ document.querySelectorAll("tbody tr").forEach(row => {
         bounds.push(leg.from, leg.to);
     });
 
-    // Hover highlight
+    // Hover effect (optional if not selected)
     row.addEventListener("mouseenter", () => {
-        row._lines.forEach(line => line.setStyle({ color: '#dc3545', weight: 4, opacity: 1 }));
+        if (!selectedRow) {
+            row._lines.forEach(line => line.setStyle({ color: '#dc3545', weight: 4, opacity: 1 }));
+        }
     });
     row.addEventListener("mouseleave", () => {
-        row._lines.forEach(line => line.setStyle({ color: '#007bff', weight: 2, opacity: 0.65 }));
+        if (!selectedRow) {
+            row._lines.forEach(line => line.setStyle({ color: '#007bff', weight: 2, opacity: 0.65 }));
+        }
     });
+
+    // Click to select trip
+    row.addEventListener("click", () => {
+        if (selectedRow === row) {
+            // Deselect
+            selectedRow._lines.forEach(line => line.setStyle({ color: '#007bff', weight: 2, opacity: 0.65 }));
+            selectedRow = null;
+            drawnRoutes.forEach(line => line.setStyle({ opacity: 0.65, weight: 2 }));
+        } else {
+            // Deselect previous
+            if (selectedRow) {
+                selectedRow._lines.forEach(line => line.setStyle({ color: '#007bff', weight: 2, opacity: 0.65 }));
+            }
+            selectedRow = row;
+
+            // Highlight selected trip
+            selectedRow._lines.forEach(line => line.setStyle({ color: '#dc3545', weight: 4, opacity: 1 }));
+
+            // Make all other lines semi-transparent
+            drawnRoutes.forEach(line => {
+                if (!selectedRow._lines.includes(line)) {
+                    line.setStyle({ opacity: 0.2, weight: 2 });
+                }
+            });
+        }
+    });
+
 });
 
-// Fit map to all routes
 if (bounds.length) {
     map.fitBounds(bounds, { padding: [40, 40] });
 }
