@@ -1,0 +1,26 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env  # Automatically loads environment variables from the .env file
+    depends_on:
+      - neo4j
+    environment:
+      # Optionally override or add more environment variables specific to this service
+      - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0
+
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-password}  # Securely passes the creds
+    ports:
+      - "7474:7474"   # Neo4j Browser
+      - "7687:7687"   # Bolt
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  neo4j_data:

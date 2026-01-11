@@ -6,6 +6,13 @@ from src.ryanairApi import getActiveAirports, getDestinationsForAirport
 from src.utils import build_trips_from_neo4j_results, distanceForEachAirport
 from typing import List
 
+import os
+
+neo4j_uri = os.getenv("NEO4J_URI", "bolt://neo4j:7687") 
+neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+neo4j_password = os.getenv("NEO4J_PASSWORD", "test1234")
+flask_secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
+
 
 # BASE_AIRPORTS = ["DUB", "SNN", "NOC"]
 
@@ -22,7 +29,7 @@ def parse_list(value: str) -> List[str]:
     return [v.strip() for v in value.split(",") if v.strip()]
 
 # Neo4j driver setup
-def get_neo4j_driver(uri="bolt://localhost:7687", user="neo4j", password="test1234"):
+def get_neo4j_driver(uri=neo4j_uri, user=neo4j_user, password=neo4j_password):
     return GraphDatabase.driver(uri, auth=(user, password))
 
 def get_airports_by_codes(airport_codes, airports):
@@ -31,7 +38,7 @@ def get_airports_by_codes(airport_codes, airports):
 
 # Flask application setup
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = flask_secret_key
 
 @app.route("/", methods=["GET"])
 def index():
