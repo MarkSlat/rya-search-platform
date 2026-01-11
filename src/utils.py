@@ -61,7 +61,8 @@ def get_airports_by_codes(airport_codes, airports):
 
 def build_trips_from_neo4j_results(
     results: List[Neo4jResultFormatted],
-    adults: int = 1
+    adults: int = 1,
+    airports: List[Airport] = []
 ) -> List[Trip]:
 
     trips: List[Trip] = []
@@ -103,7 +104,15 @@ def build_trips_from_neo4j_results(
                     destinationDepartureTime=ret.departureTime,
                     originArrivalTime=ret.arrivalTime,
                     fullFare=fare,
-                    distance=result.travel_distance_km
+                    distance=result.travel_distance_km,
+                    originDepartureLat=next((a.latitude for a in airports if a.code == result.origin_departure_airport_code), None),
+                    originDepartureLon=next((a.longitude for a in airports if a.code == result.origin_departure_airport_code), None),
+                    destinationArrivalLat=next((a.latitude for a in airports if a.code == result.destination_arrival_airport_code), None),
+                    destinationArrivalLon=next((a.longitude for a in airports if a.code == result.destination_arrival_airport_code), None),
+                    destinationDepartureLat=next((a.latitude for a in airports if a.code == result.destination_departure_airport_code), None),
+                    destinationDepartureLon=next((a.longitude for a in airports if a.code == result.destination_departure_airport_code), None),
+                    originArrivalLat=next((a.latitude for a in airports if a.code == result.origin_arrival_airport_code), None),
+                    originArrivalLon=next((a.longitude for a in airports if a.code == result.origin_arrival_airport_code), None),
                 )
 
                 trips.append(trip)

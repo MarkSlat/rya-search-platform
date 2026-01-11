@@ -68,7 +68,7 @@ def submit():
     )
 
     # Build trips from the query result
-    trips = build_trips_from_neo4j_results(result, adults)
+    trips = build_trips_from_neo4j_results(result, adults, GraphRepository(get_neo4j_driver()).getAirports())
     
     trips.sort(key=lambda t: (t.fullFare))
 
