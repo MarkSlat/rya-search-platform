@@ -76,7 +76,7 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Origin Departure Airports</label>
+                            <label>Origin Departure Airports</label> <a href="/admin">(Update)</a>
                             <select class="form-control" name="origin_departure_airports[]" multiple required>
                                 {% for option in origin_options %}
                                     <option value="{{ option }}">{{ option }}</option>
@@ -114,8 +114,8 @@
 
                     <div class="form-group">
                         <label>Lengths of Stay</label>
-                        <input class="form-control" name="lengths_of_stay" value="3,5,7" required>
-                        <small class="help-text">Comma separated (e.g. 3,5,7)</small>
+                        <input class="form-control" name="lengths_of_stay" value="2,3,4" required>
+                        <small class="help-text">Comma separated (e.g. 2,3,4)</small>
                     </div>
                 </div>
 

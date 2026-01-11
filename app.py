@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request
+from flask import Flask, flash, redirect, render_template, request, url_for
 from datetime import datetime
 from neo4j import GraphDatabase
 from src.graphRepository import GraphRepository
-from src.utils import build_trips_from_neo4j_results
+from src.ryanairApi import getActiveAirports, getDestinationsForAirport
+from src.utils import build_trips_from_neo4j_results, distanceForEachAirport
 from typing import List
 
 
-BASE_AIRPORTS = ["DUB", "SNN", "NOC"]
+# BASE_AIRPORTS = ["DUB", "SNN", "NOC"]
 
 # Example function to parse dates
 def parse_dates(date_string: str) -> List[datetime]:
@@ -24,9 +25,13 @@ def parse_list(value: str) -> List[str]:
 def get_neo4j_driver(uri="bolt://localhost:7687", user="neo4j", password="test1234"):
     return GraphDatabase.driver(uri, auth=(user, password))
 
+def get_airports_by_codes(airport_codes, airports):
+    return [airport for airport in airports if airport.code in airport_codes]
+
+
 # Flask application setup
 app = Flask(__name__)
-
+app.secret_key = "supersecretkey"
 
 @app.route("/", methods=["GET"])
 def index():
@@ -34,7 +39,11 @@ def index():
     country_set = set(airport.countryName for airport in airports)
     country_options = sorted(list(country_set))
 
-    return render_template("index.jinja2", origin_options=BASE_AIRPORTS, country_options=country_options)
+    base_airports_obj = GraphRepository(get_neo4j_driver()).getBaseAirports()
+    base_airport_codes = {airport.code for airport in base_airports_obj}
+    base_airport_codes = sorted(list(base_airport_codes))
+
+    return render_template("index.jinja2", origin_options=base_airport_codes, country_options=country_options)
 
 
 @app.route("/submit", methods=["POST"])
@@ -73,6 +82,78 @@ def submit():
     trips.sort(key=lambda t: (t.fullFare))
 
     return render_template("trips.jinja2", trips=trips)
+
+
+@app.route("/admin", methods=["GET", "POST"])
+def admin():
+    airports = getActiveAirports()
+    airport_codes = {airport.code for airport in airports}
+    
+    airport_codes = sorted(list(airport_codes))
+    
+    driver = get_neo4j_driver()
+    base_airports_obj = GraphRepository(driver).getBaseAirports()
+    base_airport_codes = {airport.code for airport in base_airports_obj}
+    
+    # global selected_airports
+    if request.method == "POST":
+        # Update selected base airports        
+        GraphRepository(driver).clearGraph()
+        
+        selected_airports = request.form.getlist("base_airports")
+        
+        desinations = set()
+
+        GraphRepository(driver).save_airports(airports)
+        
+        for selected_airport in selected_airports:
+            GraphRepository(driver).setBaseAirport(selected_airport, True)
+
+        for aiport in selected_airports:
+            flights = getDestinationsForAirport(aiport, airports)
+            GraphRepository(driver).save_flights(flights)
+            for flight in flights:
+                desinations.add(flight.origin.code)
+
+        airport_objects = get_airports_by_codes(desinations, airports)
+
+        distances = distanceForEachAirport(airport_objects)
+
+        GraphRepository(driver).save_distances(distances)
+        
+        flash(f"Selected base airports updated: {', '.join(selected_airports)}", "success")
+        return redirect(url_for("admin"))
+
+    return render_template("admin.jinja2", 
+                           airport_codes=airport_codes,
+                           base_airport_codes=base_airport_codes)
+
+@app.route("/update_all_flights", methods=["POST"])
+def update_all_flights():
+    driver = get_neo4j_driver()
+    airports = getActiveAirports()
+    
+    # Get current base airports
+    base_airports_obj = GraphRepository(driver).getBaseAirports()
+    base_airport_codes = [airport.code for airport in base_airports_obj]
+
+    destinations = set()
+    GraphRepository(driver).save_airports(airports)
+
+    # Update flights for all base airports
+    for aiport in base_airport_codes:
+        flights = getDestinationsForAirport(aiport, airports)
+        GraphRepository(driver).save_flights(flights)
+        for flight in flights:
+            destinations.add(flight.origin.code)
+
+    airport_objects = get_airports_by_codes(destinations, airports)
+    distances = distanceForEachAirport(airport_objects)
+    GraphRepository(driver).save_distances(distances)
+
+    flash(f"Flights updated for base airports: {', '.join(base_airport_codes)}", "success")
+    return redirect(url_for("admin"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)

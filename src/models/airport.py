@@ -9,6 +9,7 @@ class Airport:
     countryName: str
     latitude: float
     longitude: float
+    base: bool = False
     
     def to_dict(self) -> Dict:
         return {
@@ -17,5 +18,6 @@ class Airport:
             "cityName": self.cityName,
             "countryName": self.countryName,
             "latitude": self.latitude,
-            "longitude": self.longitude
+            "longitude": self.longitude,
+            "base": self.base,
         }

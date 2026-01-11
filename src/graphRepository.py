@@ -35,6 +35,22 @@ class GraphRepository:
         with self.driver.session() as session:
             result = session.run("MATCH (a:Airport) RETURN a")
             return [Airport(**record["a"]) for record in result]
+        
+    def getBaseAirports(self) -> list[Airport]:
+        with self.driver.session() as session:
+            result = session.run("MATCH (a:Airport {base: true}) RETURN a")
+            return [Airport(**record["a"]) for record in result]
+        
+    def setBaseAirport(self, airport_code: str, is_base: bool):
+        with self.driver.session() as session:
+            session.run(
+                """
+                MATCH (a:Airport {code: $code})
+                SET a.base = $is_base
+                """,
+                code=airport_code,
+                is_base=is_base
+            )
 
     def save_flights(self, flights):
         with self.driver.session() as session:

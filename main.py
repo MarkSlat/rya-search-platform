@@ -2,6 +2,7 @@ from datetime import date
 from neo4j import GraphDatabase
 
 from src.graphRepository import GraphRepository
+from src.ryanairApi import getDestinationsForAirport
 from src.utils import build_trips_from_neo4j_results
 
 
@@ -17,32 +18,33 @@ def populateAirportsAndFlights(driver, airports, flights):
 
 driver = get_neo4j_driver()
 
-# # GraphRepository(driver).clearGraph()
+# GraphRepository(driver).clearGraph()
 
-# airports = getActiveAirports()
+airports = getActiveAirports()
 
-# # baseAirports = ["DUB", "SNN", "NOC"]
-# # baseAirports = ["SNN", "NOC"]
-# # baseAirports = ["SNN"]
-# baseAirports = ["DUB", "SNN"]
+# baseAirports = ["DUB", "SNN", "NOC"]
+# baseAirports = ["SNN", "NOC"]
+# baseAirports = ["SNN"]
+baseAirports = ["DUB", "SNN"]
 
-# desinations = set()
+desinations = set()
 
-# GraphRepository(driver).save_airports(airports)
-# for aiport in baseAirports:
-#     flights = getDestinationsForAirport(aiport, airports)
-#     GraphRepository(driver).save_flights(flights)
-#     for flight in flights:
-#         desinations.add(flight.origin.code)
+GraphRepository(driver).save_airports(airports)
 
-# def get_airports_by_codes(airport_codes, airports):
-#     return [airport for airport in airports if airport.code in airport_codes]
+for aiport in baseAirports:
+    flights = getDestinationsForAirport(aiport, airports)
+    GraphRepository(driver).save_flights(flights)
+    for flight in flights:
+        desinations.add(flight.origin.code)
 
-# airport_objects = get_airports_by_codes(desinations, airports)
+def get_airports_by_codes(airport_codes, airports):
+    return [airport for airport in airports if airport.code in airport_codes]
 
-# distances = distanceForEachAirport(airport_objects)
+airport_objects = get_airports_by_codes(desinations, airports)
 
-# GraphRepository(driver).save_distances(distances)
+distances = distanceForEachAirport(airport_objects)
+
+GraphRepository(driver).save_distances(distances)
 
 origin_airports = ["SNN"]
 
