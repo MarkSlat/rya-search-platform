@@ -1,5 +1,6 @@
 from datetime import date
 
+from src.models.airport import Airport
 from src.models.neo4jResult import Neo4jResultFormatted
 
 
@@ -29,6 +30,11 @@ class GraphRepository:
                     """,
                     **props,
                 )
+                
+    def getAirports(self) -> list[Airport]:
+        with self.driver.session() as session:
+            result = session.run("MATCH (a:Airport) RETURN a")
+            return [Airport(**record["a"]) for record in result]
 
     def save_flights(self, flights):
         with self.driver.session() as session:

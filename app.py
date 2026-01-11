@@ -30,7 +30,11 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.jinja2", origin_options=BASE_AIRPORTS)
+    airports = GraphRepository(get_neo4j_driver()).getAirports()
+    country_set = set(airport.countryName for airport in airports)
+    country_options = sorted(list(country_set))
+
+    return render_template("index.jinja2", origin_options=BASE_AIRPORTS, country_options=country_options)
 
 
 @app.route("/submit", methods=["POST"])
@@ -44,8 +48,8 @@ def submit():
     lengths_of_stay = [int(x) for x in parse_list(request.form["lengths_of_stay"])]
     adults = int(request.form["adults"])
     
-    blacklist_countries = parse_list(request.form.get("blacklist_countries", ""))
-    whitelist_countries = parse_list(request.form.get("whitelist_countries", ""))
+    blacklist_countries = request.form.getlist("blacklist_countries[]")
+    whitelist_countries = request.form.getlist("whitelist_countries[]")
 
     same_airport_return = "same_airport_return" in request.form
     max_distance = int(request.form["max_distance"]) if request.form.get("max_distance") else None

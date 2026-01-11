@@ -37,6 +37,20 @@
     <label>Lengths of Stay (comma separated)</label><br>
     <input name="lengths_of_stay" value="3,5,7" required><br><br>
 
+    <label>Blacklist Countries</label><br>
+    <select name="blacklist_countries[]" multiple size="4">
+        {% for option in country_options %}
+            <option value="{{ option }}">{{ option }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <label>Whitelist Countries</label><br>
+    <select name="whitelist_countries[]" multiple size="4">
+        {% for option in country_options %}
+            <option value="{{ option }}">{{ option }}</option>
+        {% endfor %}
+    </select><br><br>
+
     <label>Number of Adults</label><br>
     <input type="number" name="adults" value="1" min="1" required><br><br>
 
