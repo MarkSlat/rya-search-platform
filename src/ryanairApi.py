@@ -10,7 +10,7 @@ GET_ALL_ACTIVE_AIRPORTS_URL = "https://www.ryanair.com/api/views/locate/5/airpor
 GET_ALL_ROUTES_FOR_AIRPORT_URL = "https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/{airportCode}"
 GET_DATES_FOR_FLIGHT_URL = "https://www.ryanair.com/api/farfnd/v4/oneWayFares/{origin}/{destination}/availabilities"
 GET_FARE_FOR_NO_ADULTS_URL ="https://www.ryanair.com/api/booking/v4/en-gb/availability?ADT={adult}&DateOut={departDate}&Destination={destination}&Origin={origin}&IncludeConnectingFlights=false&RoundTrip=false&ToUs=AGREED"
-
+GET_CURRENCY_EXCHANGE_RATE_URL = "https://api.exchangerate-api.com/v4/latest/{from_currency}"
 
 def get_exchange_rate(from_currency: str, to_currency: str) -> float:
     """
@@ -21,7 +21,7 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> float:
         return 1.0
     
     # Example using exchangerate-api.com (free tier available)
-    url = f"https://api.exchangerate-api.com/v4/latest/{from_currency}"
+    url = GET_CURRENCY_EXCHANGE_RATE_URL.format(from_currency=from_currency)
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
@@ -113,7 +113,7 @@ def getAdvFlights(
                 # Parse departure and arrival datetime
                 departure_dt = datetime.fromisoformat(segment["time"][0]) if segment.get("time") else None
                 arrival_dt = datetime.fromisoformat(segment["time"][1]) if segment.get("time") else None
-                
+
                 flights_list.append(
                     AdvFlysTo(
                         origin=origin_airport,
@@ -150,18 +150,6 @@ def getDestinationsForAirport(airportCode: str, airportList: List[Airport]) -> L
 
         destination_airport = airports.get(dest_code)
         if not destination_airport:
-            # Create destination Airport if missing
-            # destination_airport = Airport(
-            #     code=dest_code,
-            #     name=dest_data["name"],
-            #     cityName=dest_data["city"]["name"],
-            #     countryName=dest_data["country"]["name"],
-            #     latitude=dest_data["coordinates"]["latitude"],
-            #     longitude=dest_data["coordinates"]["longitude"],
-            #     BscFlysTo=[]
-            # )
-            # airports[dest_code] = destination_airport
-            # airportList.append(destination_airport)  # keep the list updated
             print("WARNING aiport not in list")
             
         url = GET_DATES_FOR_FLIGHT_URL.format(origin=origin_airport.code, destination=destination_airport.code)

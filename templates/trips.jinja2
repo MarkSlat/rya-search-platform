@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trips</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+
+<h2>Trips</h2>
+
+<table border="1" cellpadding="6">
+    <thead>
+        <tr>
+            <th>Destination</th>
+            <th>Fare</th>
+            <th>Origin Departure</th>
+            <th>Destination Arrival</th>
+            <th>Destination Departure</th>
+            <th>Origin Arrival</th>
+            <th>Land Transfer Distance (km)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trip in trips %}
+        <tr>
+            <td>{{ trip.destination }}</td>
+            <td>€{{ "%.2f"|format(trip.fullFare) }}</td>
+            <td>{{ trip.originDepartureTime }}</td>
+            <td>{{ trip.destinationArrivalTime }}</td>
+            <td>{{ trip.destinationDepartureTime }}</td>
+            <td>{{ trip.originArrivalTime }}</td>
+            <td>{{ trip.distance }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<br>
+<a href="/">← Back</a>
+
+</body>
+</html>

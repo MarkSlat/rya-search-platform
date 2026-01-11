@@ -81,7 +81,6 @@ result = GraphRepository(driver).query_flights(
 )
 
 # print(result)
-
 trips = build_trips_from_neo4j_results(result, adults=1)
 
 # Print the result

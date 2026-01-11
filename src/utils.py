@@ -56,6 +56,8 @@ def neo4j_date_to_str(d) -> str:
     """Convert neo4j.time.Date → YYYY-MM-DD"""
     return f"{d.year:04d}-{d.month:02d}-{d.day:02d}"
 
+def get_airports_by_codes(airport_codes, airports):
+    return [airport for airport in airports if airport.code in airport_codes]
 
 def build_trips_from_neo4j_results(
     results: List[Neo4jResultFormatted],
@@ -96,28 +98,14 @@ def build_trips_from_neo4j_results(
                     destinationArrivalAirportName=result.destination_arrival_airport_code,
                     destinationDepartureAirportName=result.destination_departure_airport_code,
                     originArrivalAirportName=result.origin_arrival_airport_code,
-                    originDepartureTime=result.origin_departure_date,
-                    destinationDepartureTime=result.destination_departure,
+                    originDepartureTime=outbound.departureTime,
+                    destinationArrivalTime=outbound.arrivalTime,
+                    destinationDepartureTime=ret.departureTime,
+                    originArrivalTime=ret.arrivalTime,
                     fullFare=fare,
                     distance=result.travel_distance_km
                 )
 
                 trips.append(trip)
 
-        # trip = Trip(
-        #     destination=result.destination_arrival_airport_code,
-        #     originDepartureAirportName=result.origin_departure_airport_code,
-        #     destinationArrivalAirportName=result.destination_arrival_airport_code,
-        #     destinationDepartureAirportName=result.destination_departure_airport_code,
-        #     originArrivalAirportName=result.origin_arrival_airport_code,
-        #     originDepartureTime=result.origin_departure_date,
-        #     destinationDepartureTime=result.destination_departure,
-        #     fullFare=fare,
-        #     distance=result.travel_distance_km
-        # )
-
-        # trips.append(trip)
-
-
     return trips
-

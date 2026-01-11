@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flight Query</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+
+<h2>Flight Query</h2>
+
+<form method="POST" action="/submit">
+
+    <label>Origin Departure Airports</label><br>
+    <select name="origin_departure_airports[]" multiple size="4" required>
+        {% for option in origin_options %}
+            <option value="{{ option }}">{{ option }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <label>Origin Arrival Airports</label><br>
+    <select name="origin_arrival_airports[]" multiple size="4" required>
+        {% for option in origin_options %}
+            <option value="{{ option }}">{{ option }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+
+    <label>Outbound Dates</label><br>
+    <input id="r1_dates" name="r1_dates" required><br><br>
+
+    <label>Return Dates</label><br>
+    <input id="r2_dates" name="r2_dates" required><br><br>
+
+    <label>Lengths of Stay (comma separated)</label><br>
+    <input name="lengths_of_stay" value="3,5,7" required><br><br>
+
+    <label>Number of Adults</label><br>
+    <input type="number" name="adults" value="1" min="1" required><br><br>
+
+    <label>
+        <input type="checkbox" name="same_airport_return" checked>
+        Same airport return
+    </label><br><br>
+
+    <label>Max Distance (km)</label><br>
+    <input type="number" name="max_distance"><br><br>
+
+    <button type="submit">Run Query</button>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+flatpickr("#r1_dates", {
+    mode: "multiple",
+    dateFormat: "Y-m-d"
+});
+
+flatpickr("#r2_dates", {
+    mode: "multiple",
+    dateFormat: "Y-m-d"
+});
+</script>
+
+</body>
+</html>
