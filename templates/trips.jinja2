@@ -3,41 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <title>Trips</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            background: #f4f6f9;
+            padding: 30px;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+        }
+
+        .table thead th {
+            background: #343a40;
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        .table td {
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f1f5ff;
+        }
+
+        .fare {
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .distance {
+            font-weight: 500;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
 
-<h2>Trips</h2>
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-body">
 
-<table border="1" cellpadding="6">
-    <thead>
-        <tr>
-            <th>Destination</th>
-            <th>Fare</th>
-            <th>Origin Departure</th>
-            <th>Destination Arrival</th>
-            <th>Destination Departure</th>
-            <th>Origin Arrival</th>
-            <th>Land Transfer Distance (km)</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for trip in trips %}
-        <tr>
-            <td>{{ trip.destination }}</td>
-            <td>€{{ "%.2f"|format(trip.fullFare) }}</td>
-            <td>{{ trip.originDepartureTime }}</td>
-            <td>{{ trip.destinationArrivalTime }}</td>
-            <td>{{ trip.destinationDepartureTime }}</td>
-            <td>{{ trip.originArrivalTime }}</td>
-            <td>{{ trip.distance }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            <h2>🧳 Trips</h2>
 
-<br>
-<a href="/">← Back</a>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Destination</th>
+                            <th>Fare</th>
+                            <th>Origin Airports</th>
+                            <th>Origin Departure</th>
+                            <th>Destination Arrival</th>
+                            <th>Destination Departure</th>
+                            <th>Origin Arrival</th>
+                            <th>Land Transfer (km)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trip in trips %}
+                        <tr>
+                            <td>{{ trip.destination }}</td>
+
+                            <td class="fare">
+                                €{{ "%.2f"|format(trip.fullFare) }}
+                            </td>
+
+                            <td>
+                                {{ trip.originDepartureAirportName }}
+                                <span class="text-muted">→</span>
+                                {{ trip.originArrivalAirportName }}
+                            </td>
+
+                            <td>{{ trip.originDepartureTime }}</td>
+                            <td>{{ trip.destinationArrivalTime }}</td>
+                            <td>{{ trip.destinationDepartureTime }}</td>
+                            <td>{{ trip.originArrivalTime }}</td>
+
+                            <td class="distance">
+                                {% if trip.distance %}
+                                    {{ "%.2f"|format(trip.distance) }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <a href="/" class="back-link">← Back to search</a>
+
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
