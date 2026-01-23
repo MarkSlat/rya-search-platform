@@ -1,5 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
-from typing import List
+from typing import Dict, List
 
 
 from src.models.landDistance import landDistance
@@ -7,6 +8,8 @@ from src.models.airport import Airport
 from src.models.neo4jResult import Neo4jResultFormatted
 from src.models.trip import Trip
 from src.ryanairApi import getAdvFlights
+
+MAX_WORKERS = 10
 
 @staticmethod
 def haversine(lat1, lon1, lat2, lon2) -> float:
@@ -62,59 +65,86 @@ def get_airports_by_codes(airport_codes, airports):
 def build_trips_from_neo4j_results(
     results: List[Neo4jResultFormatted],
     adults: int = 1,
-    airports: List[Airport] = []
+    airports: List[Airport] | None = None,
 ) -> List[Trip]:
 
-    trips: List[Trip] = []
+    if airports is None:
+        airports = []
 
-    for result in results:
+    # Pre-index airports for fast lookup
+    airport_lookup: Dict[str, Airport] = {a.code: a for a in airports}
+
+    def process_result(result: Neo4jResultFormatted) -> List[Trip]:
+        local_trips: List[Trip] = []
+
         outboundflights = getAdvFlights(
             adult=adults,
             departDate=neo4j_date_to_str(result.origin_departure_date),
             origin_airport=result.origin_departure_airport_code,
             destination_airport=result.destination_arrival_airport_code,
         )
-        
+
         returnflights = getAdvFlights(
             adult=adults,
             departDate=neo4j_date_to_str(result.destination_departure),
             origin_airport=result.destination_departure_airport_code,
             destination_airport=result.origin_arrival_airport_code,
         )
-        
+
         for outbound in outboundflights:
             for ret in returnflights:
-                fare = None
-                if outbound.fare is not None and ret.fare is not None:
-                    fare = outbound.fare + ret.fare
+                fare = (
+                    outbound.fare + ret.fare
+                    if outbound.fare is not None and ret.fare is not None
+                    else None
+                )
+                
+                if fare is None:
+                    print(f"WARNING: Fare is None, skipping trip from {result.origin_departure_airport_code} to {result.destination_arrival_airport_code}")
+                    continue
 
-                if outbound.destinationName == ret.originName:
-                    destination = outbound.destinationName
-                else:
-                    destination = f"{outbound.destinationName} / {ret.originName}"
-
-                trip = Trip(
-                    destination=destination,
-                    originDepartureAirportName=result.origin_departure_airport_code,
-                    destinationArrivalAirportName=result.destination_arrival_airport_code,
-                    destinationDepartureAirportName=result.destination_departure_airport_code,
-                    originArrivalAirportName=result.origin_arrival_airport_code,
-                    originDepartureTime=outbound.departureTime,
-                    destinationArrivalTime=outbound.arrivalTime,
-                    destinationDepartureTime=ret.departureTime,
-                    originArrivalTime=ret.arrivalTime,
-                    fullFare=fare,
-                    distance=result.travel_distance_km,
-                    originDepartureLat=next((a.latitude for a in airports if a.code == result.origin_departure_airport_code), None),
-                    originDepartureLon=next((a.longitude for a in airports if a.code == result.origin_departure_airport_code), None),
-                    destinationArrivalLat=next((a.latitude for a in airports if a.code == result.destination_arrival_airport_code), None),
-                    destinationArrivalLon=next((a.longitude for a in airports if a.code == result.destination_arrival_airport_code), None),
-                    destinationDepartureLat=next((a.latitude for a in airports if a.code == result.destination_departure_airport_code), None),
-                    destinationDepartureLon=next((a.longitude for a in airports if a.code == result.destination_departure_airport_code), None),
-                    originArrivalLat=next((a.latitude for a in airports if a.code == result.origin_arrival_airport_code), None),
-                    originArrivalLon=next((a.longitude for a in airports if a.code == result.origin_arrival_airport_code), None),
+                destination = (
+                    outbound.destinationName
+                    if outbound.destinationName == ret.originName
+                    else f"{outbound.destinationName} / {ret.originName}"
                 )
 
-                trips.append(trip)
+                def coord(code, attr):
+                    airport = airport_lookup.get(code)
+                    return getattr(airport, attr) if airport else None
+
+                local_trips.append(
+                    Trip(
+                        destination=destination,
+                        originDepartureAirportName=result.origin_departure_airport_code,
+                        destinationArrivalAirportName=result.destination_arrival_airport_code,
+                        destinationDepartureAirportName=result.destination_departure_airport_code,
+                        originArrivalAirportName=result.origin_arrival_airport_code,
+                        originDepartureTime=outbound.departureTime,
+                        destinationArrivalTime=outbound.arrivalTime,
+                        destinationDepartureTime=ret.departureTime,
+                        originArrivalTime=ret.arrivalTime,
+                        fullFare=fare,
+                        distance=result.travel_distance_km,
+                        originDepartureLat=coord(result.origin_departure_airport_code, "latitude"),
+                        originDepartureLon=coord(result.origin_departure_airport_code, "longitude"),
+                        destinationArrivalLat=coord(result.destination_arrival_airport_code, "latitude"),
+                        destinationArrivalLon=coord(result.destination_arrival_airport_code, "longitude"),
+                        destinationDepartureLat=coord(result.destination_departure_airport_code, "latitude"),
+                        destinationDepartureLon=coord(result.destination_departure_airport_code, "longitude"),
+                        originArrivalLat=coord(result.origin_arrival_airport_code, "latitude"),
+                        originArrivalLon=coord(result.origin_arrival_airport_code, "longitude"),
+                    )
+                )
+
+        return local_trips
+
+    trips: List[Trip] = []
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [executor.submit(process_result, r) for r in results]
+
+        for future in as_completed(futures):
+            trips.extend(future.result())
 
     return trips

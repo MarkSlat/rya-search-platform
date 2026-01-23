@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List
+from cachetools import TTLCache, cached
 import requests
 
 from src.models.advFlysTo import AdvFlysTo
@@ -12,6 +13,10 @@ GET_DATES_FOR_FLIGHT_URL = "https://www.ryanair.com/api/farfnd/v4/oneWayFares/{o
 GET_FARE_FOR_NO_ADULTS_URL ="https://www.ryanair.com/api/booking/v4/en-gb/availability?ADT={adult}&DateOut={departDate}&Destination={destination}&Origin={origin}&IncludeConnectingFlights=false&RoundTrip=false&ToUs=AGREED"
 GET_CURRENCY_EXCHANGE_RATE_URL = "https://api.exchangerate-api.com/v4/latest/{from_currency}"
 
+exchange_rate_cache = TTLCache(maxsize=256, ttl=60 * 60)
+adv_flights_cache = TTLCache(maxsize=2048, ttl=15 * 60)
+
+@cached(exchange_rate_cache)
 def get_exchange_rate(from_currency: str, to_currency: str) -> float:
     """
     Fetch exchange rate from one currency to another.
@@ -53,6 +58,7 @@ def getActiveAirports() -> List[Airport]:
     
     return airports
 
+@cached(adv_flights_cache)
 def getAdvFlights(
     adult: int, 
     departDate: str, 
